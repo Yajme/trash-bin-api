@@ -2,6 +2,8 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import db from './model/db.js';
+import user from './routes/user.js';
+
 dotenv.config();
 const app = express();
 
@@ -12,10 +14,7 @@ app.use(express.urlencoded({ extended: true })); // Parse URL-encoded form bodie
 //Initialization of Database
 db.initDatabase();
 
-app.use('/',(req,res)=>{
-    res.json({message : "Hello World"});
-});
-
+app.use('/user',user);
 
 
 
