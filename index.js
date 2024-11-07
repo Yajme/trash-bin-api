@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import db from './model/db.js';
 import user from './routes/user.js';
+import firebase from './controllers/firebase.js';
 
 dotenv.config();
 const app = express();
@@ -13,7 +14,7 @@ app.use(express.urlencoded({ extended: true })); // Parse URL-encoded form bodie
 
 //Initialization of Database
 db.initDatabase();
-
+firebase.initializeFirebase();
 app.use('/user',user);
 
 
