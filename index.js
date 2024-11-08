@@ -16,7 +16,9 @@ app.use(express.urlencoded({ extended: true })); // Parse URL-encoded form bodie
 db.initDatabase();
 firebase.initializeFirebase();
 app.use('/user',user);
-
+app.use('/',(req,res,next)=>{
+res.json({message : "API UP"});
+});
 
 
 const PORT = process.env.PORT;
