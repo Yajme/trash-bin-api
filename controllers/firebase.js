@@ -398,7 +398,13 @@ const uploadData = async()=>{
     }
 }
 const getFirebaseApp = () => app;
-
+const createConstraint =(key,Logic,Parameter)=>{
+  return {
+    key : key,
+    Logic : Logic,
+    Param : Parameter
+  };
+}
 export default {
     initializeFirebase,
     getFirebaseApp,
@@ -412,5 +418,6 @@ export default {
     toGeopoint,
     toTimestamp,
     sendNotification,
-    deleteDocument
+    deleteDocument,
+    createConstraint
 };
