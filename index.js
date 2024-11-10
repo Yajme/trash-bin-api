@@ -16,10 +16,22 @@ app.use(express.urlencoded({ extended: true })); // Parse URL-encoded form bodie
 db.initDatabase();
 firebase.initializeFirebase();
 app.use('/user',user);
-app.use('/',(req,res,next)=>{
+app.get('/',(req,res,next)=>{
 res.json({message : "API UP"});
 });
 
+//catches non existent url
+app.get('*', (req, res, next) => {
+    const requestedURL = req.url;
+    const error = new Error('Wrong URL ' + requestedURL + " is not existent");
+    error.status = 404; // You can set the status to 404 or any other appropriate status code.
+    
+    next(error); // Pass the error to the error-handling middleware.
+});
+
+app.use((err, req, res, next) => {  
+    res.status(err.status || 500).json({message: err.message, status: err.status});
+});
 
 const PORT = process.env.PORT;
 const isProd = process.env.PRODUCTION;

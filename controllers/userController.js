@@ -7,54 +7,104 @@ const userSelectedFields = [
 ];
 //GET Request
 
-const formatDate = (seconds,nanoseconds)=>{
-    const milliseconds = seconds * 1000 + nanoseconds/ 1000000;
+const formatDate = (seconds, nanoseconds) => {
+    const milliseconds = seconds * 1000 + nanoseconds / 1000000;
 
     return new Date(milliseconds);
 }
-const getAllUsers = async (req,res,next)=>{
-    try{
-        const collection =  "user_information";
+const getAllUsers = async (req, res, next) => {
+    try {
+        const collection = "user_information";
         const selectedFields = [
             'first_name',
             'last_name',
             'address',
             'birthday',
         ]
-        const users = await firebase.getDocuments(collection,selectedFields);
-        if(users.length === 0) return res.status(404).json({message : "No User Found"});
+        const users = await firebase.getDocuments(collection, selectedFields);
+        if (users.length === 0) return res.status(404).json({ message: "No User Found" });
         let data = [];
-        for(const user of users){
+        for (const user of users) {
             const birthday = formatDate(user.birthday.seconds, user.birthday.nanoseconds).toLocaleDateString();
             user.birthday = birthday;
             data.push(user);
         }
 
         res.status(200).json(data);
-    }catch(error){
+    } catch (error) {
         console.log(error);
+        next(error);
     }
 }
 
 
 //POST request
-const logout = async (req,res,next)=>{
-    try{
+const registerAccount = async (req, res, next) => {
+    try {
+
+        const {
+            username,
+            password,
+            first_name,
+            last_name,
+            birthday,
+            address,
+            role
+        } = req.body;
+        if (!username || !password) return res.status(406).json({ message: "Invalid Username or Password" });
+        //Check if the username is already existing
+        const checkUsername = await firebase.getDocumentByParam(COLLECTION_NAME, firebase.createConstraint('username', '==', username), ['id']);
+        if (checkUsername.length > 0) return res.status(406).json({ message: "Username already exists" });
+        //first register the user account to collection users
+        const setUserData = {
+            username: username,
+            password: password,
+            role: role !== null ? role : 'user'
+        }
+
+        const setUser = await firebase.setDocument(COLLECTION_NAME, setUserData);
+        //Create a userReference
+        try {
+            const userRef = await firebase.createDocumentReference(COLLECTION_NAME, setUser);
+
+            const setUserInformation = {
+                first_name: first_name,
+                last_name: last_name,
+                address: address,
+                birthday: new Date(birthday),
+                user: userRef
+            }
+
+            //setUserInformation
+            const setUserInfo = await firebase.setDocument('user_information', setUserInformation);
+        } catch (error) {
+            await firebase.deleteDocument(COLLECTION_NAME, setUser);
+            return res.status(500).json({ message: "something went wrong please try again later" });
+        }
+
+        res.status(200).json({ message: "User Successfully Registered!", user_id: setUser });
+    } catch (error) {
+        console.log(error);
+        next(error);
+    }
+}
+const logout = async (req, res, next) => {
+    try {
         //Delete Tokens Here
         const token = req.body.token;
-        const tokenConstraint = firebase.createConstraint('token','==',token);
-        const getToken = await firebase.getDocumentByParam('devices',tokenConstraint,['id']);
-        if(getToken.length > 0){
-            for(const tokens of getToken){
-                await firebase.deleteDocument('devices', token.id);
+        const tokenConstraint = firebase.createConstraint('token', '==', token);
+        const getToken = await firebase.getDocumentByParam('devices', tokenConstraint, ['id']);
+        if (getToken.length > 0) {
+            for (const tokens of getToken) {
+                await firebase.deleteDocument('devices', tokens.id);
             }
-        }else{
-            return res.status(401).json({message : "Invalid Token"});
+        } else {
+            return res.status(401).json({ message: "Invalid Token" });
         }
 
 
-        res.status(200).json({message : "Device successfully logged out"});
-    }catch(error){
+        res.status(200).json({ message: "Device successfully logged out" });
+    } catch (error) {
         console.log(error);
     }
 }
@@ -120,6 +170,7 @@ const authenticateUser = async (req, res, next) => {
         //next();
     } catch (error) {
         console.log(error);
+        next(error);
     }
 }
 
@@ -128,5 +179,6 @@ const authenticateUser = async (req, res, next) => {
 export default {
     authenticateUser,
     getAllUsers,
-    logout
+    logout,
+    registerAccount
 }
