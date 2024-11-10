@@ -8,7 +8,8 @@ router.get('/',(req,res,next)=>{
 router.get('/all',controller.getAllUsers);
 router.post('/register',controller.registerAccount);
 router.post('/login',controller.authenticateUser);
-router.post('/logout',controller.logout);
-
+router.delete('/logout',controller.logout);
+router.patch('/change/password',controller.changePassword);
+router.put('/change/information',controller.changeInformation);
 
 export default router;

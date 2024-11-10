@@ -122,6 +122,7 @@ const response = async (req,res,next)=>{
         next(error);
     }
 }
+//TODO : Register waste here from Pi
 export default {
     dashboardData,
     largestCategory,

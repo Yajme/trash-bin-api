@@ -10,6 +10,12 @@ const userSelectedFields = [
 
 const getAllUsers = async (req, res, next) => {
     try {
+        //check here if the request is from a admin
+        const {user_id} = req.body;
+        if(!user_id) return res.status(401).json({message : "Invalid Request"});
+
+        const getUser = await firebase.getDocumentById(COLLECTION_NAME,user_id,['role']);
+        if(getUser.role !=='admin') return res.status(401).json({message : "Invalid Request"});
         const collection = "user_information";
         const selectedFields = [
             'first_name',
@@ -78,8 +84,65 @@ const registerAccount = async (req, res, next) => {
             return res.status(500).json({ message: "something went wrong please try again later" });
         }
 
-        res.status(200).json({ message: "User Successfully Registered!", user_id: setUser });
+        res.status(201).json({ message: "User Successfully Registered!", user_id: setUser });
     } catch (error) {
+        console.log(error);
+        next(error);
+    }
+}
+
+const changePassword = async (req,res,next)=>{
+    try{
+        const {username, old_password, new_password} = req.body;
+        if(!username || username == null) return res.status(400).json({message : "Invalid Username"});
+        //check if oldPassword matches to the server
+        const userConstraint = firebase.createConstraint('username','==',username);
+        const user = await firebase.getDocumentByParam(COLLECTION_NAME,userConstraint,userSelectedFields);
+        if(user.length === 0) return res.status(401).json({message : "Invalid Username"});
+        if(old_password == null || !old_password) return res.status(400).json({message : "Invalid Password"});
+        const password = user[0].password;
+        if(password !== old_password) return res.status(401).json({message : "Invalid Password"});
+        if(new_password == null || !new_password) return res.status(400).json({message : "Invalid Password"});
+        const setData = {
+            password : new_password
+        }
+        const update = await firebase.updateData(COLLECTION_NAME,setData,user[0].id);
+        if(!update) return res.status(502).json({message : "Something went wrong, try again later."});
+
+        res.status(201).json({message : "Password Successfully Updated!"});
+    }catch(error){
+        console.log(error);
+        next(error);
+    }
+}
+
+const changeInformation = async(req,res,next)=>{
+    try{
+        const {first_name,last_name,birthday,address,user_id} = req.body;
+        if(!first_name || !last_name) return res.status(400).json({message: "Invalid Name"});
+        if(!birthday) return res.status(400).json({message: "Invalid Name"});
+        if(!address || !new Date(address) instanceof Date) return res.status(400).json({message : "Invalid Address"});
+
+        if(!user_id) return res.status(401).json({message : "Invalid user id"});
+
+       
+        const userRef = await firebase.createDocumentReference(COLLECTION_NAME,user_id);
+        const userConstraint = firebase.createConstraint('user','==',userRef);
+        const user_information = await firebase.getDocumentByParam('user_information',userConstraint,['id']);
+        const userInfoId = user_information[0].id;
+        
+        const setData = {
+            first_name : first_name,
+            last_name : last_name,
+            address : address,
+            birthday : new Date(birthday)
+        }
+
+        const update = await firebase.updateData('user_information',setData,userInfoId);
+        if(!update) return res.status(500).json({message : "Something went wrong, try again later"});
+
+        res.status(201).json({message : "User Information Updated Successfully"});
+    }catch(error){
         console.log(error);
         next(error);
     }
@@ -139,7 +202,7 @@ const authenticateUser = async (req, res, next) => {
         }
 
 
-
+        if(!token) return res.status(400).json({message : "Invalid Token"});
         //insert or update here the token of the user
         const getToken = await firebase.getDocumentByParam('devices', userConstraint, ['token']);
         if (getToken.length > 0) {
@@ -176,5 +239,7 @@ export default {
     authenticateUser,
     getAllUsers,
     logout,
-    registerAccount
+    registerAccount,
+    changePassword,
+    changeInformation
 }
