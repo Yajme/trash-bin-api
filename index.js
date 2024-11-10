@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import db from './model/db.js';
 import user from './routes/user.js';
+import waste from './routes/waste.js';
 import firebase from './controllers/firebase.js';
 
 dotenv.config();
@@ -16,6 +17,7 @@ app.use(express.urlencoded({ extended: true })); // Parse URL-encoded form bodie
 db.initDatabase();
 firebase.initializeFirebase();
 app.use('/user',user);
+app.use('/waste',waste);
 app.get('/',(req,res,next)=>{
 res.json({message : "API UP"});
 });
@@ -30,7 +32,11 @@ app.get('*', (req, res, next) => {
 });
 
 app.use((err, req, res, next) => {  
-    res.status(err.status || 500).json({message: err.message, status: err.status});
+    res.status(err.status || 500).json({
+        message: err.message, 
+        stack: err.stack,
+        status: err.status
+    });
 });
 
 const PORT = process.env.PORT;

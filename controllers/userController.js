@@ -1,4 +1,5 @@
 import firebase from "./firebase.js";
+import { formatDate } from "../utils/date.js";
 const COLLECTION_NAME = 'users';
 const userSelectedFields = [
     'username',
@@ -7,11 +8,6 @@ const userSelectedFields = [
 ];
 //GET Request
 
-const formatDate = (seconds, nanoseconds) => {
-    const milliseconds = seconds * 1000 + nanoseconds / 1000000;
-
-    return new Date(milliseconds);
-}
 const getAllUsers = async (req, res, next) => {
     try {
         const collection = "user_information";
