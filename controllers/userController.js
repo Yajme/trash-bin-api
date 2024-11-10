@@ -11,10 +11,12 @@ const userSelectedFields = [
 const getAllUsers = async (req, res, next) => {
     try {
         //check here if the request is from a admin
-        const {user_id} = req.body;
+        const {user_id} = req.query;
+
         if(!user_id) return res.status(401).json({message : "Invalid Request"});
 
         const getUser = await firebase.getDocumentById(COLLECTION_NAME,user_id,['role']);
+
         if(getUser.role !=='admin') return res.status(401).json({message : "Invalid Request"});
         const collection = "user_information";
         const selectedFields = [
