@@ -121,7 +121,41 @@ const dashboardData = async (req,res,next)=>{
         next(error);
     }
 } 
-
+const wasteRecords = async (req,res,next)=>{
+    try{
+        const {user_id} = req.query;
+        //check first if user is valid and registered to the database
+        const user = await firebase.getDocumentById('users',user_id);
+        if(user === null){
+            const err = new Error('User not found');
+            err.status = 404;
+            err.data = {
+                user_id : user_id,
+                query : 'Requested for all records of waste converted to points by user'
+            };
+            throw err;
+        }
+        const userRef = await firebase.createDocumentReference('users',user_id);
+        const userConstraint = firebase.createConstraint('user','==',userRef);
+        const getRecords = await firebase.getDocumentByParam(collection_name,userConstraint,wasteSelectedFields);
+        if(getRecords.length === 0){
+            const err = new Error('No record found');
+            err.status = 404;
+            err.data = {
+                user_id : user_id,
+                query : 'Requested for all records of waste converted to points by user'
+            };
+            throw err;
+        }
+        let records = [];
+        for(const record of getRecords){
+            records.push(Waste.createWithObject(record));
+        }
+        res.status(200).json(records);
+    }catch(error){
+        next(error);
+    }
+}
 const response = async (req,res,next)=>{
     try{
         const data = res.locals.data;
@@ -139,7 +173,8 @@ export default {
     largestPoint,
     recentPoint,
     currentPoints,
-    response
+    response,
+    wasteRecords
 }
 
 export {
@@ -148,5 +183,6 @@ export {
     largestPoint,
     recentPoint,
     currentPoints,
-    response
+    response,
+    wasteRecords
 }
