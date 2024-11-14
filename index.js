@@ -4,8 +4,10 @@ import cors from 'cors';
 import db from './model/db.js';
 import user from './routes/user.js';
 import waste from './routes/waste.js';
+import transaction from './routes/transaction.js';
 import firebase from './controllers/firebase.js';
-
+import { getCurrentDate } from './utils/date.js';
+import { logEvent } from './utils/logs.js';
 dotenv.config();
 const app = express();
 
@@ -18,10 +20,19 @@ db.initDatabase();
 firebase.initializeFirebase();
 app.use('/user',user);
 app.use('/waste',waste);
+app.use('/transaction',transaction);
 app.get('/',(req,res,next)=>{
 res.json({message : "API UP"});
 });
-
+app.get('/time',(req,res,next)=>{
+    const date = getCurrentDate().format();
+    res.json({
+        dateobj : date,
+        date: date,
+        time: date,
+        timezone: 'Asia/Manila'
+    });
+});
 //catches non existent url
 app.get('*', (req, res, next) => {
     const requestedURL = req.url;
@@ -32,6 +43,16 @@ app.get('*', (req, res, next) => {
 });
 
 app.use((err, req, res, next) => {  
+    logEvent({
+
+            message : err.message,
+            stack : err.stack,
+
+       data: {
+            ...err.data }
+
+
+    })
     res.status(err.status || 500).json({
         message: err.message, 
         stack: isProd ==='false' ? err.stack : undefined,
