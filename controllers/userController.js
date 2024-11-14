@@ -194,8 +194,8 @@ const authenticateUser = async (req, res, next) => {
             user = {
                 name:
                 {
-                    first_name: userInformation[0].first_name,
-                    last_name: userInformation[0].last_name
+                    first: userInformation[0].first_name,
+                    last: userInformation[0].last_name
                 },
                 address: userInformation[0].address,
                 birthday: userBirthday.toLocaleDateString()
