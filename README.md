@@ -2,6 +2,9 @@
 ---
 
 ## Usage
+
+### User
+
 Access the users redirect to `/user`
 
 **Items:**
@@ -25,8 +28,8 @@ Example body for method request:
 }
 ```
 
-`/waste`
 
+### Waste 
 Access the information regarding waste in bins: `/waste`
 
 **Items:**
@@ -35,6 +38,7 @@ Access the information regarding waste in bins: `/waste`
 URL | Request Method | Description | Required Parameters |  Example use 
 ----|---------------| ----------- | ------------ | ------------
 `/waste/dashboard` | `GET` | Get all the necessary information needed in dashboard | `user_id` | `/waste/dashboard?user_id={user_id}`
+`/waste/records` | `GET`| Get all the records of waste the user converted into points | `user_id` | `/waste/records?user_id={user_id}`
 
 
 Example output in JSON
@@ -47,5 +51,26 @@ Example output in JSON
   "largest_point": 27.6,
   "recent_points": 13.8,
   "current_points": 70.1
+}
+```
+
+
+### Transaction
+
+
+Start a transaction with: `/transaction`
+
+**Items:**
+URL | Request Method | Description | Required Parameters |  Example use 
+----|---------------| ----------- | ------------ | ------------
+`/transaction/redeem` | `POST` | Redeems the points acquired by the user | `user_id`, `amount` | `/transaction/redeem`
+
+
+Example request body for `/transaction/redeem`:
+
+```json
+{
+  "user_id" : "user_idofUser",
+  "amount" : 87
 }
 ```
