@@ -21,15 +21,17 @@ firebase.initializeFirebase();
 app.use('/user',user);
 app.use('/waste',waste);
 app.use('/transaction',transaction);
+// Prevent the error by responding to /favicon.ico requests with an empty response
+app.get('/favicon.ico', (req, res) => res.status(204).end());
 app.get('/',(req,res,next)=>{
 res.json({message : "API UP"});
 });
 app.get('/time',(req,res,next)=>{
-    const date = getCurrentDate().format();
+    const date = getCurrentDate().toDate();
     res.json({
         dateobj : date,
-        date: date,
-        time: date,
+        date: date.toLocaleDateString(),
+        time: date.toLocaleTimeString(),
         timezone: 'Asia/Manila'
     });
 });
