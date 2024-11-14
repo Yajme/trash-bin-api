@@ -4,7 +4,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev" : "nodemon index.js",
+    "dev": "nodemon index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -17,6 +17,7 @@
     "express": "^4.21.1",
     "firebase": "^10.12.3",
     "firebase-admin": "^12.7.0",
+    "moment-timezone": "^0.5.46",
     "pg": "^8.13.1"
   },
   "devDependencies": {
