@@ -22,6 +22,16 @@ const currentPoints = async (req,res,next)=>{
             currentPoints += Number(record.points) ?? 0;
         }
         res.locals.data.current_points = currentPoints - points;
+        //get the points doc id here
+        const stored_points = await firebase.getDocumentByParam("points",userConstraint,['id']);
+        //Set the current points to database
+        const setData = {
+            current_points : res.locals.data.current_points,
+            modified_at : new Date()
+        }
+
+        const update_points = await firebase.updateData('points',setData,stored_points[0].id);
+        if(!update_points) throw new Error('Something went wrong please try again later');
         next();
     }catch(error){
         next(error);
