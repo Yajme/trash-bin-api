@@ -185,7 +185,7 @@ const authenticateUser = async (req, res, next) => {
         const userRef = await firebase.createDocumentReference(COLLECTION_NAME, data[0].id);
         const userConstraint = firebase.createConstraint('user', '==', userRef);
 
-        if (data[0].role === 'user') {
+        
 
             const userInformation = await firebase.getDocumentByParam('user_information', userConstraint, ['first_name', 'last_name', 'birthday', 'address']);
 
@@ -201,7 +201,7 @@ const authenticateUser = async (req, res, next) => {
                 birthday: userBirthday.toLocaleDateString()
             }
 
-        }
+        
 
 
         if(!token) return res.status(400).json({message : "Invalid Token"});
