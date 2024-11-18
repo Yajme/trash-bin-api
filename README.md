@@ -39,7 +39,7 @@ URL | Request Method | Description | Required Parameters |  Example use
 ----|---------------| ----------- | ------------ | ------------
 `/waste/dashboard` | `GET` | Get all the necessary information needed in dashboard | `user_id` | `/waste/dashboard?user_id={user_id}`
 `/waste/records` | `GET`| Get all the records of waste the user converted into points | `user_id` | `/waste/records?user_id={user_id}`
-
+`/waste/records/all` | `GET` | Get all the records of waste all the user converted into points | `user_id` | `/waste/records/all?user_id=admin_id`
 
 Example output in JSON
 
@@ -64,7 +64,7 @@ Start a transaction with: `/transaction`
 URL | Request Method | Description | Required Parameters |  Example use 
 ----|---------------| ----------- | ------------ | ------------
 `/transaction/redeem` | `POST` | Redeems the points acquired by the user | `user_id`, `amount` | `/transaction/redeem`
-
+`/transaction/records` | `GET` | Fetch the required records of transaction made in the system | `filter`, `user_id` | `/transaction/records?filter=individual&user_id=userid`, `/transaction/records?filter=all&user_id=admin_id` | 
 
 Example request body for `/transaction/redeem`:
 
