@@ -5,11 +5,13 @@ import{dashboardData,
     recentPoint,
     currentPoints,
     response,
-    wasteRecords
+    wasteRecords,
+    wasteRecordsAll
 } from '../controllers/wasteController.js';
 const router = express.Router();
 // /waste
 router.get('/records',wasteRecords);
+router.get('/records/all',wasteRecordsAll);
 router.get('/dashboard',dashboardData,
     largestCategory,
     largestPoint,

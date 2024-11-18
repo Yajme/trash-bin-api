@@ -1,5 +1,6 @@
 import firebase from "./firebase.js";
 import { formatDate } from "../utils/date.js";
+import { UserError } from "../utils/errors.js";
 const COLLECTION_NAME = 'users';
 const userSelectedFields = [
     'username',
@@ -13,11 +14,11 @@ const getAllUsers = async (req, res, next) => {
         //check here if the request is from a admin
         const {user_id} = req.query;
 
-        if(!user_id) return res.status(401).json({message : "Invalid Request"});
+        if(!user_id) throw new UserError('Invalid Request',401,{query:"Request for all information of users but there's no user id provided"});
 
         const getUser = await firebase.getDocumentById(COLLECTION_NAME,user_id,['role']);
-
-        if(getUser.role !=='admin') return res.status(401).json({message : "Invalid Request"});
+        if(getUser === null) throw new UserError('User Not found',404,{query:"Request for all information of users but user requesting not existent",user_id: user_id});
+        if(getUser.role !=='admin') throw new UserError('Invalid Request',401,{query:"Request for all information of users but not an admin", user_id:user_id});
         const collection = "user_information";
         const selectedFields = [
             'first_name',
@@ -26,7 +27,7 @@ const getAllUsers = async (req, res, next) => {
             'birthday',
         ]
         const users = await firebase.getDocuments(collection, selectedFields);
-        if (users.length === 0) return res.status(404).json({ message: "No User Found" });
+        if (users.length === 0) throw new UserError('No Record Found',404,{query:"Request for all information of users but there is not existent records of user",user_id: user_id});
         let data = [];
         for (const user of users) {
             const birthday = formatDate(user.birthday.seconds, user.birthday.nanoseconds).toLocaleDateString();

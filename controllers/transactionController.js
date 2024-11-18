@@ -1,19 +1,25 @@
 import firebase from "./firebase.js";
 import { connection } from "../model/db.js";
-import { Transaction,Transactions } from "../model/transaction.js";
+import { PointRedemptions, Transaction,Transactions } from "../model/transaction.js";
 import { getCurrentDate } from "../utils/date.js";
+import { UserError } from "../utils/errors.js";
 import generate from '../utils/generate.js';
 const collection_name = {
     points : 'points',
     points_redemptions : 'points_redemptions'
 }
-
+const selectedField = {
+    points : [],
+    points_redemptions : ['created_at','points','reference_number','user','first_name','last_name']
+}
 //Redeem Points here
 const RedeemPoints = async (req,res,next)=>{
     try{
-        const {user_id, amount} = req.body;
+        const user_id = req.body.user_id;
+        const amount = Number(req.body.amount);
+        
         //Authenticate User
-        //const userConstraint = 
+       
         const user = await firebase.getDocumentById('users',user_id,['role','id']);
         console.log(user);
         if(user == null) {
@@ -31,9 +37,11 @@ const RedeemPoints = async (req,res,next)=>{
         //Check the current points of the user
         const userRef = await firebase.createDocumentReference('users',user_id);
         const userConstraint = firebase.createConstraint('user','==',userRef);
-        
+         //Let's Check if modified_at is a latest
+
+         
         const getPoints = await firebase.getDocumentByParam(collection_name.points,userConstraint,['current_points']);
-        const current_points = getPoints[0].current_points;
+        const current_points = Number(getPoints[0].current_points);
 
         if(current_points < amount){
             const err = new Error('Current points insufficient');
@@ -73,6 +81,9 @@ const RedeemPoints = async (req,res,next)=>{
 
         const redeemPoints = await firebase.setDocument(collection_name.points_redemptions,setData);
         
+        //update points
+        
+
         //Insert to cash ledger here
         try{
             const cash_data = Transaction.createForInsert({
@@ -88,18 +99,28 @@ const RedeemPoints = async (req,res,next)=>{
             //Rollbacks
             await firebase.deleteDocument(collection_name.points_redemptions,redeemPoints);
         }
+
         
 
-        res.status(201).json({
+        res.locals.data={
             message : 'Points redemption complete',
             amount : amount,
             reference_number : reference_number
-        });
+        }
+        next();
     }catch(error){
         next(error);
     }
 }
-
+const response = async (req,res,next)=>{
+    try{
+        const data = res.locals.data;
+        if(!data) return res.status(404).json({message : "No Data Found"});
+        res.status(200).json(data);
+    }catch(error){
+        next(error);
+    }
+}
 //Transfer Points to another account 
 const TransferPoints = async (req,res,next)=>{
     try{
@@ -111,7 +132,45 @@ const TransferPoints = async (req,res,next)=>{
 
 }
 
+const getTransactionRecords = async(req,res,next)=>{
+    try{
+        const {user_id,filter} = req.query;
+
+        if (!user_id || (!filter && (filter !== 'individual' && filter !== 'all')))  throw new UserError('Invalid Request',400,{query : 'Requested for transaction records but did not provide a proper query'});
+        const user = await firebase.getDocumentById('users',user_id);
+        if(user === null || user === undefined) throw new UserError('User not found',404,{query: 'Requested for transaction records but provided invalid user', user_id: user_id});
+        //If filter is all check if user is an admin
+        if(filter === 'all' && user.role !== 'admin') throw new UserError('Invalid Request',401,{query: 'Requested for all transaction records but is not an admin', user: user});
+        let transactions = [];
+        if(filter == 'individual'){
+            const userRef = await firebase.createDocumentReference('users',user_id);
+            const userConstraint = firebase.createConstraint('user','==',userRef);
+            const user_information = await firebase.getDocumentByParam('user_information',userConstraint,['id']);
+            const id = user_information[0].id;
+    
+            const userInfoRef = await firebase.createDocumentReference('user_information',id);
+            const userInfoConstraint = firebase.createConstraint('user','==',userInfoRef);
+            transactions = await firebase.getDocumentByParam(collection_name.points_redemptions,userInfoConstraint,selectedField.points_redemptions);
+        }
+        
+        if(filter =='all')
+        {
+            transactions = await firebase.getDocuments(collection_name.points_redemptions,selectedField.points_redemptions);
+        }
+        //console.log(transactions);
+        let points = [];
+        for(const point of transactions){
+            points.push(PointRedemptions.createFromObject(point));
+        }
+        
+        res.status(200).json(points);
+    }catch(error){
+        next(error);
+    }
+}
 export default {
     RedeemPoints,
-    TransferPoints
+    TransferPoints,
+    getTransactionRecords,
+    response
 }

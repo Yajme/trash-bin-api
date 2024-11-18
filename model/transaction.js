@@ -58,7 +58,31 @@ class Transactions {
     }
 }
 
+class PointRedemptions {
+    constructor({id,created_at,points,reference_number,name}){
+        this.id =id;
+        this.created_at = created_at;
+        this.points = points;
+        this.reference_number = reference_number;
+        this.name = name;
+    }
+
+    static createFromObject(points){
+        const date = formatDate(points.created_at.seconds,points.created_at.nanoseconds);
+        return new PointRedemptions({
+            id: points.id,
+            created_at : date,
+            points : points.points,
+            reference_number : points.reference_number,
+            name : {
+            first : points.user.first_name,
+            last : points.user.last_name
+            }
+        });
+    }
+}
 export {
     Transaction,
-    Transactions
+    Transactions,
+    PointRedemptions
 }

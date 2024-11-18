@@ -6,17 +6,28 @@ const wasteSelectedFields = [
     'created_at',
     'points',
     'weight',
-    'user_id'
-]
+    'user_id',
+    'user',
+    'first_name',
+    'last_name'
+];
+
+
 const currentPoints = async (req,res,next)=>{
     try{
         let currentPoints = 0;
         //check the redeemed points here
         const userConstraint = firebase.createConstraint('user','==',res.locals.userRef);
-        const pointsCollected = await firebase.getDocumentByParam('points_redemptions',userConstraint,['created_at','points',]);
+        const getUserInfo = await firebase.getDocumentByParam('user_information',userConstraint,['id']);
+        const id = getUserInfo[0].id;
+        const userInfoRef = await firebase.createDocumentReference('user_information',id);
+        const userInfoConstraint = firebase.createConstraint('user','==',userInfoRef);
+        
+        const pointsCollected = await firebase.getDocumentByParam('points_redemptions',userInfoConstraint,['created_at','points',]);
         let points = 0;
         for(const point of pointsCollected){
             points += Number(point.points);
+
         }
         for(const record of res.locals.records){
             currentPoints += Number(record.points) ?? 0;
@@ -89,12 +100,17 @@ const dashboardData = async (req,res,next)=>{
         //Largest category obtained 
         //Largest Amount obtained
        
-        const {user_id} = req.query;
+        const user_id = req.query.user_id ?? req.body.user_id;
+
+        console.log(user_id);
         if(!user_id || user_id == null) return res.status(404).json({message : "Missing argument"});
         const userRef = await firebase.createDocumentReference('users',user_id);
         res.locals.userRef = userRef;
         const userConstraint = firebase.createConstraint('user','==',userRef);
-        const wasteRecords = await firebase.getDocumentByParam(collection_name,userConstraint,wasteSelectedFields);
+        const getUserInformation = await firebase.getDocumentByParam('user_information',userConstraint,['id']);
+        const userInfoRef = await firebase.createDocumentReference('user_information',getUserInformation[0].id);
+        const userInfoConstraint = firebase.createConstraint('user','==',userInfoRef);
+        const wasteRecords = await firebase.getDocumentByParam(collection_name,userInfoConstraint,wasteSelectedFields);
         if(wasteRecords.length === 0) 
             return res.json({
         message : "No Record Found",
@@ -121,6 +137,50 @@ const dashboardData = async (req,res,next)=>{
         next(error);
     }
 } 
+const wasteRecordsAll = async (req,res,next)=>{
+    try{
+        const {user_id} = req.query;
+        
+        //check first if user is valid and registered to the database
+        const user = await firebase.getDocumentById('users',user_id);
+        if(user === null){
+            const err = new Error('User not found');
+            err.status = 404;
+            err.data = {
+                user_id : user_id,
+                query : 'Requested for all records of waste converted to points by user'
+            };
+            throw err;
+        }
+        if(user.role !== 'admin'){
+            const err = new Error('Invalid Request');
+            err.status = 401;
+            err.data = {
+                user_id : user_id,
+                query : 'Requested for all records of waste converted to points by user but not an admin'
+            };
+            throw err;
+        }
+        const getRecords = await firebase.getDocuments(collection_name,wasteSelectedFields);
+        console.log(getRecords);
+        if(getRecords.length === 0){
+            const err = new Error('No record found');
+            err.status = 404;
+            err.data = {
+                user_id : user_id,
+                query : 'Requested for all records of waste converted to points by user'
+            };
+            throw err;
+        }
+        let records = [];
+        for(const record of getRecords){
+            records.push(Waste.createWithObject(record));
+        }
+        res.status(200).json(records);
+    }catch(error){
+        next(error);
+    }
+}
 const wasteRecords = async (req,res,next)=>{
     try{
         const {user_id} = req.query;
@@ -184,5 +244,6 @@ export {
     recentPoint,
     currentPoints,
     response,
-    wasteRecords
+    wasteRecords,
+    wasteRecordsAll
 }
