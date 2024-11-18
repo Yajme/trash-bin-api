@@ -9,7 +9,7 @@ const collection_name = {
     points_redemptions : 'points_redemptions'
 }
 const selectedField = {
-    points : [],
+    points : ['created_at','current_points','modified_at','user','first_name','last_name'],
     points_redemptions : ['created_at','points','reference_number','user','first_name','last_name']
 }
 //Redeem Points here
@@ -157,6 +157,7 @@ const getTransactionRecords = async(req,res,next)=>{
         {
             transactions = await firebase.getDocuments(collection_name.points_redemptions,selectedField.points_redemptions);
         }
+        if(transactions.length === 0) throw new UserError('No Records Found',404,{query:"Requested for records of transactions",filter: filter, user_id : user_id});
         //console.log(transactions);
         let points = [];
         for(const point of transactions){
