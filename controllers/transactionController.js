@@ -71,11 +71,16 @@ const RedeemPoints = async (req,res,next)=>{
         }
 
         //Insert to points_redemption
+         
+            const user_information = await firebase.getDocumentByParam('user_information',userConstraint,['id']);
+            const id = user_information[0].id;
+    
+            const userInfoRef = await firebase.createDocumentReference('user_information',id);
         const reference_number =  generate.generateRandomNumber(1000);
         const setData = {
             created_at : getCurrentDate().toDate(),
             points: amount,
-            user: userRef,
+            user: userInfoRef,
             reference_number : reference_number
         }
 
