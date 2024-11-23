@@ -37,10 +37,14 @@ const RedeemPoints = async (req,res,next)=>{
         //Check the current points of the user
         const userRef = await firebase.createDocumentReference('users',user_id);
         const userConstraint = firebase.createConstraint('user','==',userRef);
+        const user_information = await firebase.getDocumentByParam('user_information',userConstraint,['id']);
+        const id = user_information[0].id;
+        const userInfoRef = await firebase.createDocumentReference('user_information',id);
+        const userInfoConstraint = firebase.createConstraint('user','==',userInfoRef);
          //Let's Check if modified_at is a latest
 
          
-        const getPoints = await firebase.getDocumentByParam(collection_name.points,userConstraint,['current_points']);
+        const getPoints = await firebase.getDocumentByParam(collection_name.points,userInfoConstraint,['current_points']);
         const current_points = Number(getPoints[0].current_points);
 
         if(current_points < amount){
@@ -72,10 +76,7 @@ const RedeemPoints = async (req,res,next)=>{
 
         //Insert to points_redemption
          
-            const user_information = await firebase.getDocumentByParam('user_information',userConstraint,['id']);
-            const id = user_information[0].id;
-    
-            const userInfoRef = await firebase.createDocumentReference('user_information',id);
+            
         const reference_number =  generate.generateRandomNumber(1000);
         const setData = {
             created_at : getCurrentDate().toDate(),
