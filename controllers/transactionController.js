@@ -46,7 +46,7 @@ const RedeemPoints = async (req,res,next)=>{
          
         const getPoints = await firebase.getDocumentByParam(collection_name.points,userInfoConstraint,['current_points']);
         const current_points = Number(getPoints[0].current_points);
-
+        console.log(getPoints);
         if(current_points < amount){
             const err = new Error('Current points insufficient');
             err.status = 400;

@@ -34,7 +34,7 @@ const currentPoints = async (req,res,next)=>{
         }
         res.locals.data.current_points = currentPoints - points;
         //get the points doc id here
-        const stored_points = await firebase.getDocumentByParam("points",userConstraint,['id']);
+        const stored_points = await firebase.getDocumentByParam("points",userInfoConstraint,['id']);
         //Set the current points to database
         const setData = {
             current_points : res.locals.data.current_points,
