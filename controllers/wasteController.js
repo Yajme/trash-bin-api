@@ -235,7 +235,7 @@ const response = async (req,res,next)=>{
 }
 const generateWasteId = async (req,res,next)=>{
     try{
-        const id = generate.generateRandomID(1000);
+        const id = generate.generateRandomID(256);
         //Persist
         const setData = {
             id : id,
