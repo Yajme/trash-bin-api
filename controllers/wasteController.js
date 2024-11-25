@@ -198,7 +198,11 @@ const wasteRecords = async (req,res,next)=>{
         }
         const userRef = await firebase.createDocumentReference('users',user_id);
         const userConstraint = firebase.createConstraint('user','==',userRef);
-        const getRecords = await firebase.getDocumentByParam(collection_name,userConstraint,wasteSelectedFields);
+        const user_information = await firebase.getDocumentByParam('user_information',userConstraint,['id']);
+        const id = user_information[0].id;
+        const userInfoRef = await firebase.createDocumentReference('user_information',id);
+        const userInfoConstraint = firebase.createConstraint('user','==',userInfoRef);
+        const getRecords = await firebase.getDocumentByParam(collection_name,userInfoConstraint,wasteSelectedFields);
         if(getRecords.length === 0){
             const err = new Error('No record found');
             err.status = 404;
