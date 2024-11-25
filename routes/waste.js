@@ -6,7 +6,8 @@ import{dashboardData,
     currentPoints,
     response,
     wasteRecords,
-    wasteRecordsAll
+    wasteRecordsAll,
+    generateWasteId
 } from '../controllers/wasteController.js';
 const router = express.Router();
 // /waste
@@ -18,7 +19,7 @@ router.get('/dashboard',dashboardData,
     recentPoint,
     currentPoints,
     response);
-
+router.get('/generate',generateWasteId);
 
 
 export default router;

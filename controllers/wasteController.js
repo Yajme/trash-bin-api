@@ -1,5 +1,7 @@
 import firebase from "./firebase.js";
 import { Waste } from "../model/waste.js";
+import generate from "../utils/generate.js";
+import { getCurrentDate } from "../utils/date.js";
 const collection_name = 'waste';
 const wasteSelectedFields = [
     'category',
@@ -231,6 +233,20 @@ const response = async (req,res,next)=>{
         next(error);
     }
 }
+const generateWasteId = async (req,res,next)=>{
+    try{
+        const id = generate.generateRandomID(1000);
+        //Persist
+        const setData = {
+            id : id,
+            created_at : getCurrentDate().toDate()
+        }
+        const setQrCode = await firebase.setDocument('qrcode',setData);
+        res.json({message : "QR successfully generated", qrcode: id, qr_code_id : setQrCode});
+    }catch(error){
+        next(error);
+    }
+}
 //TODO : Register waste here from Pi
 export default {
     dashboardData,
@@ -250,5 +266,6 @@ export {
     currentPoints,
     response,
     wasteRecords,
-    wasteRecordsAll
+    wasteRecordsAll,
+    generateWasteId
 }
