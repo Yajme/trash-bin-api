@@ -2,6 +2,7 @@ import firebase from "./firebase.js";
 import { Waste } from "../model/waste.js";
 import generate from "../utils/generate.js";
 import { getCurrentDate } from "../utils/date.js";
+import { UserError } from "../utils/errors.js";
 const collection_name = 'waste';
 const wasteSelectedFields = [
     'category',
@@ -238,12 +239,55 @@ const generateWasteId = async (req,res,next)=>{
         const id = generate.generateRandomID(256);
         //Persist
         const setData = {
-            id : id,
+            code : id,
+            scanned: false,
             created_at : getCurrentDate().toDate()
         }
         const setQrCode = await firebase.setDocument('qrcode',setData);
         res.json({message : "QR successfully generated", qrcode: id, qr_code_id : setQrCode});
     }catch(error){
+        error.data = {
+            query: "User wants to generate qr code but something went wrong"
+        };
+        next(error);
+    }
+}
+const scanQrCode = async (req,res,next)=>{
+    try {
+        const qrcode = req.query.qrcode;
+        if(!qrcode) throw new UserError('Invalid QR Code',402,{query: "Routed here but no qrcode provided"});
+        const qrcodeContraint = firebase.createConstraint('code','==',qrcode);
+        const getQrCodeID = await firebase.getDocumentByParam('qrcode',qrcodeContraint,['id']);
+        if(getQrCodeID.length ===0) throw new UserError('QR not found',404,{query : "QR scanned by user but not found in the database",qrcode : qrcode});
+        if(getQrCodeID[0].scanned === true || getQrCodeID[0].scanned===null){
+            console.log(getQrCodeID[0].scanned);
+            throw new UserError('QR Already Scanned please generate new QR Code',402,{query:" User attempted to scan a QR Code that has been already scanned"});
+        }
+        const id = getQrCodeID[0].id;
+        const setData = { 
+            scanned : true
+        }
+        const update = await firebase.updateData('qrcode',setData,id);
+        if(!update) throw new UserError('Something went wrong please try again',500,{query : "Tried to update scanned field but did not work for some reason"});
+
+        res.status(200).json({message : "QR Scanned Successfully!", id : id});
+    } catch (error) {
+        next(error);
+    }
+}
+const checkScanned = async (req,res,next)=>{
+    try {
+        const id = req.query.id;
+        if(!id) throw new UserError('Invalid ID',401,{query:"Checking if the QR Code has been scanned already but did not provide any id"});
+        const qrcode = await firebase.getDocumentById('qrcode',id,['scanned','id','code']);
+        const scanned = qrcode.scanned;
+        if(scanned || scanned === true) {
+            return res.status(200).json({message : "QR Scanned", scanned : scanned});
+        }else{
+            return res.status(200).json({message : "QR is not scanned", scanned : scanned});
+        }
+
+    } catch (error) {
         next(error);
     }
 }
@@ -255,7 +299,9 @@ export default {
     recentPoint,
     currentPoints,
     response,
-    wasteRecords
+    wasteRecords,
+    scanQrCode,
+    checkScanned
 }
 
 export {
@@ -267,5 +313,7 @@ export {
     response,
     wasteRecords,
     wasteRecordsAll,
-    generateWasteId
+    generateWasteId,
+    scanQrCode,
+    checkScanned
 }
