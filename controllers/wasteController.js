@@ -291,7 +291,63 @@ const checkScanned = async (req,res,next)=>{
         next(error);
     }
 }
-//TODO : Register waste here from Pi
+const registerWasteRecords = async (req, res, next) => {
+    try {
+        // Validate JSON input
+        if (!req.body || !Array.isArray(req.body.records)) {
+            throw new UserError("Invalid input. 'records' array is required.");
+        }
+
+        const records = req.body.records;
+        const userId = req.body.user_id;
+
+        if (!userId) {
+            throw new UserError("Missing 'user_id' in request body.");
+        }
+
+        // Get user reference from Firebase
+        const userRef = await firebase.createDocumentReference("users", userId);
+
+        // Initialize an array to hold processed records
+        const wasteRecords = [];
+
+        for (const record of records) {
+            const { category, weight, points } = record;
+
+            if (!category || typeof weight !== "number" || typeof points !== "number") {
+                throw new UserError("Each record must include 'category', 'weight', and 'points'.");
+            }
+
+            // Create waste record object
+            const wasteRecord = {
+                category,
+                weight,
+                points,
+                created_at: getCurrentDate().toDate(),
+                user: userRef
+            };
+
+            // Add record to Firebase
+            const addedRecord = await firebase.addDocument("waste", wasteRecord);
+
+            if (!addedRecord) {
+                throw new Error("Failed to register waste record.");
+            }
+
+            // Append the added record to the array
+            wasteRecords.push(wasteRecord);
+        }
+
+        // Respond with success message and added records
+        res.status(201).json({
+            message: "Waste records registered successfully.",
+            records: wasteRecords
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 export default {
     dashboardData,
     largestCategory,
@@ -301,7 +357,8 @@ export default {
     response,
     wasteRecords,
     scanQrCode,
-    checkScanned
+    checkScanned,
+    registerWasteRecords
 }
 
 export {
@@ -315,5 +372,6 @@ export {
     wasteRecordsAll,
     generateWasteId,
     scanQrCode,
-    checkScanned
+    checkScanned,
+    registerWasteRecords
 }
