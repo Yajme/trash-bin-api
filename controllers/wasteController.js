@@ -3,6 +3,8 @@ import { Waste } from "../model/waste.js";
 import generate from "../utils/generate.js";
 import { getCurrentDate } from "../utils/date.js";
 import { UserError } from "../utils/errors.js";
+import { connection } from "../model/db.js";
+import QRCode from "../model/qrcode.js";
 const collection_name = 'waste';
 const wasteSelectedFields = [
     'category',
@@ -255,7 +257,9 @@ const generateWasteId = async (req,res,next)=>{
 const scanQrCode = async (req,res,next)=>{
     try {
         const qrcode = req.query.qrcode;
+        const user_id = req.query.user_id;
         if(!qrcode) throw new UserError('Invalid QR Code',402,{query: "Routed here but no qrcode provided"});
+        if(!user_id) throw new UserError('Invalid User ID',402,{query: "Provided a qrcode but no user ID"});
         const qrcodeContraint = firebase.createConstraint('code','==',qrcode);
         const getQrCodeID = await firebase.getDocumentByParam('qrcode',qrcodeContraint,['id']);
         if(getQrCodeID.length ===0) throw new UserError('QR not found',404,{query : "QR scanned by user but not found in the database",qrcode : qrcode});
@@ -264,12 +268,22 @@ const scanQrCode = async (req,res,next)=>{
             throw new UserError('QR Already Scanned please generate new QR Code',402,{query:" User attempted to scan a QR Code that has been already scanned"});
         }
         const id = getQrCodeID[0].id;
+        const userRef = await firebase.createDocumentReference('users',user_id);
+        const userConstraint = firebase.createConstraint('user','==',userRef);
+
+        const getUserInformation = await firebase.getDocumentByParam('user_information',userConstraint,['id']);
+        const userInfoRef = await firebase.createDocumentReference('user_informtion',getUserInformation[0].id);
+
         const setData = { 
-            scanned : true
+            scanned : true,
+            user : userInfoRef
         }
         const update = await firebase.updateData('qrcode',setData,id);
         if(!update) throw new UserError('Something went wrong please try again',500,{query : "Tried to update scanned field but did not work for some reason"});
-
+        setData.qrcode = qrcode;
+        setData.user_id = user_id
+        const qrObj = new QRCode(setData,connection);
+        await qrObj.insertScanned();
         res.status(200).json({message : "QR Scanned Successfully!", id : id});
     } catch (error) {
         next(error);
@@ -279,10 +293,10 @@ const checkScanned = async (req,res,next)=>{
     try {
         const id = req.query.id;
         if(!id) throw new UserError('Invalid ID',401,{query:"Checking if the QR Code has been scanned already but did not provide any id"});
-        const qrcode = await firebase.getDocumentById('qrcode',id,['scanned','id','code']);
+        const qrcode = await firebase.getDocumentById('qrcode',id,['scanned','id','code','user','user_id']);
         const scanned = qrcode.scanned;
         if(scanned || scanned === true) {
-            return res.status(200).json({message : "QR Scanned", scanned : scanned});
+            return res.status(200).json({message : "QR Scanned", scanned : scanned, user : qrcode.user_id});
         }else{
             return res.status(200).json({message : "QR is not scanned", scanned : scanned});
         }
@@ -302,11 +316,11 @@ const registerWasteRecords = async (req, res, next) => {
         const userId = req.body.user_id;
 
         if (!userId) {
-            throw new UserError("Missing 'user_id' in request body.");
+            throw new UserError("Missing 'user_id' in request body.",404,{query : 'No user id provided for registration of waste'});
         }
 
         // Get user reference from Firebase
-        const userRef = await firebase.createDocumentReference("users", userId);
+        const userRef = await firebase.createDocumentReference("user_information", userId);
 
         // Initialize an array to hold processed records
         const wasteRecords = [];
@@ -328,10 +342,10 @@ const registerWasteRecords = async (req, res, next) => {
             };
 
             // Add record to Firebase
-            const addedRecord = await firebase.addDocument("waste", wasteRecord);
+            const addedRecord = await firebase.setDocument("waste", wasteRecord);
 
             if (!addedRecord) {
-                throw new Error("Failed to register waste record.");
+                throw new UserError("Failed to register waste record.");
             }
 
             // Append the added record to the array
