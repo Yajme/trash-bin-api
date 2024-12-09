@@ -355,7 +355,7 @@ const registerWasteRecords = async (req, res, next) => {
         // Respond with success message and added records
         res.status(201).json({
             message: "Waste records registered successfully.",
-            records: wasteRecords
+            records: records
         });
     } catch (error) {
         next(error);
