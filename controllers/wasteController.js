@@ -281,7 +281,7 @@ const scanQrCode = async (req,res,next)=>{
         const update = await firebase.updateData('qrcode',setData,id);
         if(!update) throw new UserError('Something went wrong please try again',500,{query : "Tried to update scanned field but did not work for some reason"});
         setData.qrcode = qrcode;
-        setData.user_id = user_id
+        setData.user_id = getUserInformation[0].id
         const qrObj = new QRCode(setData,connection);
         await qrObj.insertScanned();
         res.status(200).json({message : "QR Scanned Successfully!", id : id});
