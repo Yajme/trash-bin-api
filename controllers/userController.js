@@ -123,8 +123,8 @@ const changeInformation = async(req,res,next)=>{
     try{
         const {first_name,last_name,birthday,address,user_id} = req.body;
         if(!first_name || !last_name) return res.status(400).json({message: "Invalid Name"});
-        if(!birthday) return res.status(400).json({message: "Invalid Name"});
-        if(!address || !new Date(address) instanceof Date) return res.status(400).json({message : "Invalid Address"});
+        if(!birthday || !new Date(birthday) instanceof Date) return res.status(400).json({message: "Invalid Name"});
+        if(!address) return res.status(400).json({message : "Invalid Address"});
 
         if(!user_id) return res.status(401).json({message : "Invalid user id"});
 
