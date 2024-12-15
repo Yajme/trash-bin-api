@@ -371,12 +371,19 @@ const binOverflowing =  async (req,res,next) =>{
         const getToken = await firebase.getDocumentByParam('devices', adminUserConstraint, ['token']);
 
         
-        //based on category
         
         const message = {
             body: `The ${category} bin is full.`,
             title : `TRASHBIN FULL`
         };
+        //based on category
+        const setData = {
+            created_at : getCurrentDate.toDate(),
+            token : getToken[0].token,
+            notification :  message
+        }
+
+        const setNotification = await firebase.setDocument('notifications',setData);
         console.log(getToken);
         firebase.sendNotification(message, getToken[0].token);
 
