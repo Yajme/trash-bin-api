@@ -378,12 +378,13 @@ const binOverflowing =  async (req,res,next) =>{
         };
         //based on category
         const setData = {
-            created_at : getCurrentDate.toDate(),
+            created_at: getCurrentDate().toDate(),
             token : getToken[0].token,
             notification :  message
         }
 
         const setNotification = await firebase.setDocument('notifications',setData);
+        console.log(setNotification);
         console.log(getToken);
         firebase.sendNotification(message, getToken[0].token);
 
