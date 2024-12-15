@@ -361,7 +361,31 @@ const registerWasteRecords = async (req, res, next) => {
         next(error);
     }
 };
+const binOverflowing =  async (req,res,next) =>{
+    try {
+        const category = req.params.category;
+        const userConstraint = firebase.createConstraint('role', '==', 'admin');
+        const adminAccs = await firebase.getDocumentByParam('users', userConstraint,['id']);
+        const adminUserRef = await firebase.createDocumentReference('users',adminAccs[0].id);
+        const adminUserConstraint = firebase.createConstraint ('user', '==', adminUserRef);
+        const getToken = await firebase.getDocumentByParam('devices', adminUserConstraint, ['token']);
 
+        
+        //based on category
+        
+        const message = {
+            body: `The ${category} bin is full.`,
+            title : `TRASHBIN FULL`
+        };
+        console.log(getToken);
+        firebase.sendNotification(message, getToken[0].token);
+
+        res.status(200).send({message: 'Notification sent successfully to the Admin User.'});
+    } catch (error) {
+        console.log(error);
+        next(error);
+    }
+}
 export default {
     dashboardData,
     largestCategory,
@@ -387,5 +411,6 @@ export {
     generateWasteId,
     scanQrCode,
     checkScanned,
-    registerWasteRecords
+    registerWasteRecords,
+    binOverflowing
 }

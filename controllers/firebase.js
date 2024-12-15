@@ -65,6 +65,9 @@ const sendNotification = (message,token)=>{
     
   }catch(error){
     console.log(error);
+    if (error.errorCode == "messaging/registration-token-not-registered") { 
+      //Delete here
+    }
     throw error;
   }
 }

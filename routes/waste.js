@@ -10,7 +10,8 @@ import{dashboardData,
     generateWasteId,
     scanQrCode,
     checkScanned,
-    registerWasteRecords
+    registerWasteRecords,
+    binOverflowing
 } from '../controllers/wasteController.js';
 const router = express.Router();
 // /waste
@@ -26,4 +27,5 @@ router.get('/generate',generateWasteId);
 router.get('/scan',scanQrCode);
 router.get('/check-scan',checkScanned);
 router.post('/register',registerWasteRecords);
+router.get('/bin/:category',binOverflowing);
 export default router;
