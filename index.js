@@ -23,6 +23,7 @@ app.use('/waste',waste);
 app.use('/transaction',transaction);
 // Prevent the error by responding to /favicon.ico requests with an empty response
 app.get('/favicon.ico', (req, res) => res.status(204).end());
+app.get('/favicon.png', (req, res) => res.status(204).end());
 app.get('/',(req,res,next)=>{
 res.json({message : "API UP"});
 });
