@@ -36,7 +36,7 @@ const currentPoints = async (req,res,next)=>{
                 points: 0,
                 user : userInfoRef
             }
-            await firebase.setDocument('points_redemption',setData);
+            await firebase.setDocument('points_redemptions',setData);
         }
         for(const point of pointsCollected){
             points += Number(point.points);
