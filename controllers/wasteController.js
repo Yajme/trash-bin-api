@@ -30,6 +30,14 @@ const currentPoints = async (req,res,next)=>{
         
         const pointsCollected = await firebase.getDocumentByParam('points_redemptions',userInfoConstraint,['created_at','points',]);
         let points = 0;
+        if(!pointsCollected){
+            const setPoints = {
+                created_at : getCurrentDate().toDate(),
+                points: 0,
+                user : userInfoRef
+            }
+            await firebase.setDocument('points_redemption',setData);
+        }
         for(const point of pointsCollected){
             points += Number(point.points);
 
